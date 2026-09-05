@@ -1,0 +1,265 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: jobs
+    description: Job posting and application operations
+  - name: dashboard
+    description: Recruitment dashboard summaries
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List available jobs
+      responses:
+        "200":
+          description: Available job postings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Publish a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Published job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+  /jobs/{jobId}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job and its applications
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobDetail"
+        "404":
+          description: Job not found
+  /jobs/{jobId}/applications:
+    get:
+      operationId: listJobApplications
+      tags: [jobs]
+      summary: List applications for a job
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Applications for the job
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+        "404":
+          description: Job not found
+    post:
+      operationId: createApplication
+      tags: [jobs]
+      summary: Apply to a job
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Application result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "404":
+          description: Job not found
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get recruitment dashboard summary
+      responses:
+        "200":
+          description: Recruitment summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+components:
+  parameters:
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Job:
+      type: object
+      required:
+        - id
+        - title
+        - minExperience
+        - skill
+        - createdAt
+        - applicationCount
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        minExperience:
+          type: integer
+          minimum: 0
+        skill:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+        applicationCount:
+          type: integer
+          minimum: 0
+    JobInput:
+      type: object
+      required:
+        - title
+        - minExperience
+        - skill
+      properties:
+        title:
+          type: string
+          minLength: 1
+        minExperience:
+          type: integer
+          minimum: 0
+        skill:
+          type: string
+          minLength: 1
+        description:
+          type: string
+    JobDetail:
+      allOf:
+        - $ref: "#/components/schemas/Job"
+        - type: object
+          required:
+            - applications
+          properties:
+            applications:
+              type: array
+              items:
+                $ref: "#/components/schemas/Application"
+    Application:
+      type: object
+      required:
+        - id
+        - jobId
+        - applicantName
+        - experience
+        - skill
+        - qualified
+        - status
+        - createdAt
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        applicantName:
+          type: string
+        experience:
+          type: integer
+          minimum: 0
+        skill:
+          type: string
+        qualified:
+          type: boolean
+        status:
+          type: string
+          enum: [qualified, reviewing, not_qualified]
+        createdAt:
+          type: string
+    ApplicationInput:
+      type: object
+      required:
+        - applicantName
+        - experience
+        - skill
+      properties:
+        applicantName:
+          type: string
+          minLength: 1
+        experience:
+          type: integer
+          minimum: 0
+        skill:
+          type: string
+          minLength: 1
+    DashboardSummary:
+      type: object
+      required:
+        - jobCount
+        - applicationCount
+        - qualifiedCount
+        - recentApplications
+      properties:
+        jobCount:
+          type: integer
+        applicationCount:
+          type: integer
+        qualifiedCount:
+          type: integer
+        recentApplications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Application"
+
