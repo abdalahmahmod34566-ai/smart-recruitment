@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "نظام التوظيف والمقابلات الذكي"
+description = "تطبيق ويب عربي يساعد أصحاب العمل على نشر الوظائف والمتقدمين على استعراضها والتقديم عليها مع تقييم فوري للخبرة والمهارة المطلوبة."
+version = "1.0.0"
+id = "artifacts/smart-recruitment"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25785
+
+[services.development]
+run = "pnpm --filter @workspace/smart-recruitment run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smart-recruitment", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/smart-recruitment/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25785"
+BASE_PATH = "/"
